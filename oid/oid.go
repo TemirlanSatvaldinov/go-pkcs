@@ -4,7 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/asn1"
 
-	"github.com/encode/go-pkcs/errlist"
+	"github.com/qazsvm/go-pkcs/errlist"
 )
 
 var (

@@ -11,11 +11,11 @@ import (
 	"log"
 	"unicode/utf16"
 
-	"github.com/encode/go-pkcs/errlist"
-	"github.com/encode/go-pkcs/oid"
-	"github.com/encode/go-pkcs/pkcs5"
-	"github.com/encode/go-pkcs/pkcs7"
-	"github.com/encode/go-pkcs/pkcs8"
+	"github.com/qazsvm/go-pkcs/errlist"
+	"github.com/qazsvm/go-pkcs/oid"
+	"github.com/qazsvm/go-pkcs/pkcs5"
+	"github.com/qazsvm/go-pkcs/pkcs7"
+	"github.com/qazsvm/go-pkcs/pkcs8"
 )
 
 // pkcs12

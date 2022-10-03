@@ -7,9 +7,9 @@ import (
 	"encoding/asn1"
 	"errors"
 
-	"github.com/encode/go-pkcs/errlist"
-	"github.com/encode/go-pkcs/oid"
-	"github.com/encode/go-pkcs/pkcs5"
+	"github.com/qazsvm/go-pkcs/errlist"
+	"github.com/qazsvm/go-pkcs/oid"
+	"github.com/qazsvm/go-pkcs/pkcs5"
 )
 
 // pkcs5 struct

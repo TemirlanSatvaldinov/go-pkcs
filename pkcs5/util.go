@@ -11,8 +11,8 @@ import (
 	"encoding/asn1"
 	"hash"
 
-	"github.com/encode/go-pkcs/errlist"
-	"github.com/encode/go-pkcs/oid"
+	"github.com/qazsvm/go-pkcs/errlist"
+	"github.com/qazsvm/go-pkcs/oid"
 )
 
 func cipherFromOID(key []byte, id asn1.ObjectIdentifier) (cipher.Block, error) {

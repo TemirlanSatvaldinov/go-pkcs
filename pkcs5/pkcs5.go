@@ -9,7 +9,7 @@ import (
 	"errors"
 	"hash"
 
-	"github.com/encode/go-pkcs/errlist"
+	"github.com/qazsvm/go-pkcs/errlist"
 	"golang.org/x/crypto/pbkdf2"
 )
 

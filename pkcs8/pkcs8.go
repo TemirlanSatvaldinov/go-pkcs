@@ -7,9 +7,9 @@ import (
 	"encoding/asn1"
 	"errors"
 
-	"github.com/encode/go-pkcs/oid"
-	"github.com/encode/go-pkcs/pkcs5"
-	"github.com/encode/go-pkcs/pkcs7"
+	"github.com/qazsvm/go-pkcs/oid"
+	"github.com/qazsvm/go-pkcs/pkcs5"
+	"github.com/qazsvm/go-pkcs/pkcs7"
 )
 
 // pkcs8
