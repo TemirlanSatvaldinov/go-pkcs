@@ -28,8 +28,9 @@ func DecryptCBC(encryptedData, password, iv, salt []byte, PBKDF2Iterations int, 
 	}
 	blockMode := cipher.NewCBCDecrypter(block, iv)
 	blockMode.CryptBlocks(encryptedData, encryptedData)
+	unpad := int(encryptedData[len(encryptedData)-1])
+	return encryptedData[:(len(encryptedData) - unpad)], nil
 
-	return encryptedData, nil
 }
 func EncryptCBC(data, password []byte, PBKDF2Iterations, PBKDF2SaltSize int, cipherCode x509.PEMCipher, h func() hash.Hash) ([]byte, []byte, []byte, error) {
 	if len(password) < 6 {

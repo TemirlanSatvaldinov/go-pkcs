@@ -9,4 +9,5 @@ var (
 	ErrIncorrectPassword = errors.New("invalid password ?")
 	ErrEmptyKeyAndCert   = errors.New("pkcs12 must contain keys or certificate")
 	ErrPKCS12Version     = errors.New("error: support only pkcs12 version 3 ")
+	ErrUnsupportedSid    = errors.New("unsupported sid  ")
 )

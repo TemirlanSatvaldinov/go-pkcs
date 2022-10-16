@@ -8,7 +8,6 @@ import (
 	"encoding/asn1"
 	"encoding/binary"
 	"errors"
-	"log"
 	"unicode/utf16"
 
 	"github.com/qazsvm/go-pkcs/errlist"
@@ -69,7 +68,7 @@ func New(password []byte, pemKey interface{}, cert *x509.Certificate, caChain []
 			},
 		}
 		var certs []safeBag
-		certStruct := pkcs7.X509Data{
+		certStruct := pkcs7.X509Certificate{
 			Id:   oid.X509Certificate,
 			Data: cert.Raw,
 		}
@@ -90,7 +89,7 @@ func New(password []byte, pemKey interface{}, cert *x509.Certificate, caChain []
 
 		certs = append(certs, certBag)
 		for _, ca := range caChain {
-			caStruct := pkcs7.X509Data{
+			caStruct := pkcs7.X509Certificate{
 				Id:   oid.X509Certificate,
 				Data: ca.Raw,
 			}
@@ -251,7 +250,7 @@ func Decode(data, password []byte) (interface{}, *x509.Certificate, []*x509.Cert
 	}
 	mac := pkcs12.MacData
 	if err := verifyMac(macPassword, pkcs12.AuthenticatedSafe.Content.Bytes, mac.MacSalt, mac.Mac.Digest, mac.Mac.Id.Algorithm, mac.Iterations); err != nil {
-		return nil, nil, nil, errlist.ErrIncorrectPassword
+		return nil, nil, nil, errors.New("verify mac : " + err.Error())
 	}
 	var authenticatedSafe []pkcs7.ContentInfo
 	if _, err := asn1.Unmarshal(pkcs12.AuthenticatedSafe.Content.Bytes, &authenticatedSafe); err != nil {
@@ -263,18 +262,18 @@ func Decode(data, password []byte) (interface{}, *x509.Certificate, []*x509.Cert
 		switch {
 		case v.ContentType.Equal(oid.PKCS7EncryptedData):
 			if buf, err = pkcs7.DecodeEncryptedData(v.Content.Bytes, password); err != nil {
-				log.Fatal("pkcs7: decrypt err: " + err.Error())
+				return nil, nil, nil, err
 			}
 			if _, err := asn1.Unmarshal(buf, &certsBag); err != nil {
-				log.Fatal("pkcs7: decrypt safeBag err")
+				return nil, nil, nil, err
 			}
 		case v.ContentType.Equal(oid.PKCS7Data):
 			var data []byte
 			if _, err := asn1.Unmarshal(v.Content.Bytes, &data); err != nil {
-				log.Fatal("pkcs7: decrypt Bag err")
+				return nil, nil, nil, err
 			}
 			if _, err := asn1.Unmarshal(data, &keysBag); err != nil {
-				log.Fatal("pkcs7: decrypt sBag2 err")
+				return nil, nil, nil, err
 			}
 		}
 
@@ -285,14 +284,13 @@ func Decode(data, password []byte) (interface{}, *x509.Certificate, []*x509.Cert
 	for _, bag := range bags {
 		switch {
 		case bag.BagId.Equal(oid.CertBag):
-			certRaw := &pkcs7.X509Data{}
+			certRaw := &pkcs7.X509Certificate{}
 			_, err := asn1.Unmarshal(bag.BagValue.Bytes, certRaw)
 			if err != nil {
-				log.Fatal("cert unmarhsal err")
+				return nil, nil, nil, err
 			}
 			certs, err := x509.ParseCertificates(certRaw.Data)
 			if err != nil {
-				log.Fatal("x609 parse certs")
 				return nil, nil, nil, err
 			}
 			// cert or chain
@@ -303,7 +301,7 @@ func Decode(data, password []byte) (interface{}, *x509.Certificate, []*x509.Cert
 			}
 		case bag.BagId.Equal(oid.PKCS8ShroundedKeyBag):
 			if key, err = pkcs8.Decode(bag.BagValue.Bytes, password); err != nil {
-				log.Fatal("pkcs8: err")
+				return nil, nil, nil, err
 			}
 		}
 

@@ -16,6 +16,12 @@ var (
 	X509Certificate      = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 22, 1}
 	LocalKeyID           = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 21}
 
+	CounterSignature     = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 6}
+	SigningTime          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
+	ContentType          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 3}
+	MessageDigest        = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 4}
+	SubjectKeyIdentifier = asn1.ObjectIdentifier{2, 5, 29, 14}
+
 	SHA256WithRSA = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 11}
 	PKCS5PBKDF2   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 5, 12}
 	PBES2         = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 5, 13}
@@ -32,11 +38,6 @@ var (
 	AES192CBC = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 1, 22}
 	DESCBC    = asn1.ObjectIdentifier{1, 3, 14, 3, 2, 7}
 	D3DESCBC  = asn1.ObjectIdentifier{1, 2, 840, 113549, 3, 7}
-
-	CounterSignature = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 6}
-	SigningTime      = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
-	ContentType      = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 3}
-	MessageDigest    = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 4}
 )
 
 func OIDFromCipher(code x509.PEMCipher) (asn1.ObjectIdentifier, error) {
@@ -50,7 +51,7 @@ func OIDFromCipher(code x509.PEMCipher) (asn1.ObjectIdentifier, error) {
 	case x509.PEMCipher3DES:
 		return D3DESCBC, nil
 	case x509.PEMCipherDES:
-		return D3DESCBC, nil
+		return DESCBC, nil
 	default:
 		return nil, errlist.ErrUnknownCipher
 	}

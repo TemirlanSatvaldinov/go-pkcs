@@ -12,6 +12,13 @@ import (
 	"github.com/qazsvm/go-pkcs/pkcs5"
 )
 
+type P7DecodeResult struct {
+	Signer        []*x509.Certificate
+	Certs         []*x509.Certificate
+	CRL           []pkix.CertificateList
+	DecryptedData []byte
+}
+
 // pkcs5 struct
 type PBES2Params struct {
 	KeyDerivationFunc pkix.AlgorithmIdentifier
@@ -26,7 +33,7 @@ type Attribute struct {
 	AttrId     asn1.ObjectIdentifier
 	AttrValues asn1.RawValue `asn1:"set"`
 }
-type X509Data struct {
+type X509Certificate struct {
 	Id   asn1.ObjectIdentifier
 	Data []byte `asn1:"tag:0,explicit"`
 }
@@ -137,21 +144,31 @@ func EncryptData(data, password []byte, PBKDF2Iterations, PBKDF2SaltSize int, ci
 
 }
 
-func Decode(data, password []byte) ([]byte, error) {
+func Decode(data, password []byte) (*P7DecodeResult, error) {
 
-	p7 := new(ContentInfo)
-	var result []byte
-	if _, err := asn1.Unmarshal(data, p7); err != nil {
+	var (
+		err     error
+		content ContentInfo
+		p7      P7DecodeResult
+	)
+	if _, err := asn1.Unmarshal(data, &content); err != nil {
 		return nil, err
 	}
 	// TODO: add signed Data
 	switch {
-	case p7.ContentType.Equal(oid.PKCS7EncryptedData):
-		DecodeEncryptedData(p7.Content.Bytes, result)
+	case content.ContentType.Equal(oid.PKCS7EncryptedData):
+		if p7.DecryptedData, err = DecodeEncryptedData(content.Content.Bytes, password); err != nil {
+			return nil, err
+		}
+
+	case content.ContentType.Equal(oid.PKCS7SignedData):
+		if p7.Signer, p7.Certs, p7.CRL, err = DecodeSignedData(content.Content.Bytes); err != nil {
+			return nil, err
+		}
 	default:
 		return nil, errors.New("pkcs7: unsupported OID")
 	}
-	return result, nil
+	return &p7, nil
 }
 func DecodeEncryptedData(data, password []byte) ([]byte, error) {
 

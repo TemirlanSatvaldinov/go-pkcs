@@ -83,12 +83,12 @@ func New(key interface{}, password []byte, PBKDF2Iterations, PBKDF2SaltSize int,
 	return asn1.Marshal(pkcs8)
 }
 
-func Decode(data, password []byte) (interface{}, error) {
+func Decode(derKey, password []byte) (interface{}, error) {
 	if password == nil {
-		return x509.ParsePKCS8PrivateKey(data)
+		return x509.ParsePKCS8PrivateKey(derKey)
 	}
 	var p8 EncryptedPKCS8Key
-	if _, err := asn1.Unmarshal(data, &p8); err != nil {
+	if _, err := asn1.Unmarshal(derKey, &p8); err != nil {
 		return nil, err
 	}
 
