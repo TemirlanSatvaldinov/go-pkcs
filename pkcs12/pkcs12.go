@@ -6,15 +6,14 @@ import (
 	"crypto/sha1"
 	"crypto/x509"
 	"encoding/asn1"
-	"encoding/binary"
 	"errors"
-	"unicode/utf16"
 
 	"github.com/qazsvm/go-pkcs/errlist"
 	"github.com/qazsvm/go-pkcs/oid"
 	"github.com/qazsvm/go-pkcs/pkcs5"
 	"github.com/qazsvm/go-pkcs/pkcs7"
 	"github.com/qazsvm/go-pkcs/pkcs8"
+	"github.com/qazsvm/go-pkcs/util"
 )
 
 // pkcs12
@@ -36,17 +35,17 @@ type p12 struct {
 	MacData           macData `asn1:"optional"`
 }
 
-func New(password []byte, pemKey interface{}, cert *x509.Certificate, caChain []*x509.Certificate, PBKDF2Iterations, PBKDF2SaltSize int, keypbe x509.PEMCipher, certpbe x509.PEMCipher) ([]byte, error) {
+func New(password []byte, pemKey interface{}, cert *x509.Certificate, caChain []*x509.Certificate, friendlyNameSTR string, PBKDF2Iterations, PBKDF2SaltSize int, keypbe x509.PEMCipher, certpbe x509.PEMCipher) ([]byte, error) {
 	if len(password) < 6 {
 		return nil, errlist.ErrPasswordLen
 	}
 	if pemKey == nil && cert == nil {
 		return nil, errlist.ErrEmptyKeyAndCert
 	}
-	macPassword := bmpStringNULLTerminator((string(password)))
+	macPassword := util.BMPStringNULLTerminator((string(password)))
 	var (
-		localKeyID       pkcs7.Attribute
-		contentInfoArray []byte
+		localKeyID, friendlyName pkcs7.Attribute
+		contentInfoArray         []byte
 	)
 
 	if cert != nil {
@@ -54,19 +53,34 @@ func New(password []byte, pemKey interface{}, cert *x509.Certificate, caChain []
 		 The same identifier (alias) would be assigned to the corresponding certificates
 		*/
 		identifier := sha1.Sum(cert.Raw)
-		identifierOctet, err := asn1.Marshal(identifier[:])
-		if err != nil {
+		if identifierOctet, err := asn1.Marshal(identifier[:]); err == nil {
+			localKeyID = pkcs7.Attribute{
+				AttrId: oid.LocalKeyID,
+				AttrValues: asn1.RawValue{
+					Class:      0,
+					Tag:        17,
+					IsCompound: true,
+					Bytes:      identifierOctet,
+				},
+			}
+		} else {
 			return nil, err
 		}
-		localKeyID = pkcs7.Attribute{
-			AttrId: oid.LocalKeyID,
-			AttrValues: asn1.RawValue{
-				Class:      0,
-				Tag:        17,
-				IsCompound: true,
-				Bytes:      identifierOctet,
-			},
+
+		if bmpAsn, err := asn1.Marshal(asn1.RawValue{Class: 0, Tag: 30, Bytes: util.BMPString(friendlyNameSTR)}); err == nil {
+			friendlyName = pkcs7.Attribute{
+				AttrId: oid.FriendlyName,
+				AttrValues: asn1.RawValue{
+					Class:      0,
+					Tag:        17,
+					IsCompound: true,
+					Bytes:      bmpAsn,
+				},
+			}
+		} else {
+			return nil, err
 		}
+
 		var certs []safeBag
 		certStruct := pkcs7.X509Certificate{
 			Id:   oid.X509Certificate,
@@ -84,7 +98,7 @@ func New(password []byte, pemKey interface{}, cert *x509.Certificate, caChain []
 				IsCompound: true,
 				Bytes:      certMarshalled,
 			},
-			BagAttributes: []pkcs7.Attribute{localKeyID},
+			BagAttributes: []pkcs7.Attribute{localKeyID, friendlyName},
 		}
 
 		certs = append(certs, certBag)
@@ -135,7 +149,7 @@ func New(password []byte, pemKey interface{}, cert *x509.Certificate, caChain []
 			},
 		}
 		if cert != nil {
-			ShroudedKeyBag.BagAttributes = []pkcs7.Attribute{localKeyID}
+			ShroudedKeyBag.BagAttributes = []pkcs7.Attribute{localKeyID, friendlyName}
 		}
 		var ShroudedKeyBagArray [1]safeBag
 		ShroudedKeyBagArray[0] = ShroudedKeyBag
@@ -233,7 +247,7 @@ func Decode(data, password []byte) (interface{}, *x509.Certificate, []*x509.Cert
 		cert     *x509.Certificate
 		chain    []*x509.Certificate
 	)
-	macPassword := bmpStringNULLTerminator((string(password)))
+	macPassword := util.BMPStringNULLTerminator((string(password)))
 
 	pkcs12 := new(p12)
 	if _, err := asn1.Unmarshal(data, pkcs12); err != nil {
@@ -323,16 +337,4 @@ func verifyMac(password, message, salt, digest []byte, asnOID asn1.ObjectIdentif
 		return errlist.ErrIncorrectPassword
 	}
 	return nil
-}
-
-func bmpStringNULLTerminator(src string) []byte {
-	step := 0
-	u16 := utf16.Encode([]rune(src))
-	dst := make([]byte, len(src)*2)
-	for i := 0; i < len(u16); i++ {
-		binary.BigEndian.PutUint16(dst[step:], uint16(u16[i]))
-		step += 2
-	}
-
-	return append(dst, 0x00, 0x00)
 }

@@ -15,7 +15,7 @@ var (
 	CertBag              = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 10, 1, 3}
 	X509Certificate      = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 22, 1}
 	LocalKeyID           = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 21}
-
+	FriendlyName         = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 20}
 	CounterSignature     = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 6}
 	SigningTime          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
 	ContentType          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 3}
